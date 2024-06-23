@@ -31,7 +31,7 @@ def initiate():
     global initial_mass
     initial_mass= 1.00
     global launch_angle
-    launch_angle= math.pi * (45/180)
+    launch_angle= math.pi * (30/180) # with horizontal
     global angle
     angle= launch_angle
     global impulse_v_time 
@@ -62,9 +62,9 @@ def v(t):
     
     return velocity
 def v_x(t):
-    return v(t)*math.sin(angle)
+    return v(t)*math.cos(angle)
 def v_y(t):
-    return (v(t)*math.cos(angle)-(10*t))
+    return (v(t)*math.sin(angle)-(10*t))
 # Split velocity into vectors for easy addition of lift forces and for better trajectory manipulation
 
 
@@ -80,9 +80,9 @@ def update():
     global initial_velocity
     angle = math.atan(v_y(t)/v_x(t))
     previous_data = read_specific_line(file_path, iter_no+2)
-    previous_position_x = float(previous_data[0])
-    previous_position_y = float(previous_data[1])
-    
+    previous_position_x = float(previous_data[0]) # type: ignore
+    previous_position_y = float(previous_data[1]) # type: ignore
+
     global current_position_x
     change_position_x, error = quad(v_x,t,t+p_time)
     current_position_x = previous_position_x + change_position_x
@@ -90,10 +90,14 @@ def update():
     global current_position_y
     current_position_y = previous_position_y + change_position_y
     iter_no +=1
-    values = [current_position_x, current_position_y, t]
+    
     #print (values)
     global current_velocity
     current_velocity = v(t)
+    if current_position_y > 0:
+        values = [current_position_x, current_position_y, t+p_time]
+    else: 
+        values = [current_position_x, 0, t+p_time]
     with open(file_path, mode = 'a+' , newline = '') as file:
         writer = csv.writer(file)
         writer.writerow(values)
@@ -108,7 +112,7 @@ def main():
     mode_selector()
     columns = ["X - coordinate", "Y - coordinate", "Time"]
     data_initial = [initial_position_x, initial_position_y, 0]
-    with open(file_path, mode = 'a+' , newline = '') as file:
+    with open(file_path, mode = 'w+' , newline = '') as file:
         writer = csv.writer(file)
         writer.writerow(columns)
         writer.writerow(data_initial)
