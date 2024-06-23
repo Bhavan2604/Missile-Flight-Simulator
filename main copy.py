@@ -11,15 +11,17 @@ Main functionality:
 
 
 import math
+
 import scipy
 from scipy.integrate import quad
 import csv
 file_path = 'data.csv'
 iter_no = 0
 force_factor = 1000
-
+drag_factor = 10
+current_velocity = 0
 t = 0 
-p_time = 1e-4
+p_time = 1e-3
 current_position_y = 0
 
 def mode_selector():
@@ -45,9 +47,12 @@ def initiate():
     initial_position_y = 0
     #global initial_position_z
     #initial_position_z =0 
-
+    return initial_velocity
+def drag_impulse():
+    drag_impulse = initial_mass*((current_velocity)**2)*drag_factor
+    return drag_impulse
 def impulse(t):
-    return (((-0.5*(t**2))+7.5)*force_factor)
+    return (((-2.5*(t**2))+(5*t)+7.5)*force_factor)-drag_impulse()
 def imp_by_mass(t):
     return (impulse(t)/initial_mass)
 def v(t): 
@@ -60,6 +65,8 @@ def v_x(t):
     return v(t)*math.sin(angle)
 def v_y(t):
     return (v(t)*math.cos(angle)-(10*t))
+# Split velocity into vectors for easy addition of lift forces and for better trajectory manipulation
+
 
 #velocity = initial_velocity
 def read_specific_line(file_path, line_number):
@@ -70,6 +77,7 @@ def read_specific_line(file_path, line_number):
 def update():
     global t
     global iter_no
+    global initial_velocity
     angle = math.atan(v_y(t)/v_x(t))
     previous_data = read_specific_line(file_path, iter_no+2)
     previous_position_x = float(previous_data[0])
@@ -84,6 +92,8 @@ def update():
     iter_no +=1
     values = [current_position_x, current_position_y, t]
     #print (values)
+    global current_velocity
+    current_velocity = v(t)
     with open(file_path, mode = 'a+' , newline = '') as file:
         writer = csv.writer(file)
         writer.writerow(values)
